@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Horoscope — Love Oracle</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+  <div class="hearts-bg"></div>
+
+  <div class="page">
+    <nav>
+      <a href="../index.html" class="nav-logo">Love <span>Oracle</span></a>
+      <a href="../index.html" class="nav-back">← Back</a>
+    </nav>
+
+    <div class="tool-page">
+      <div class="tool-header">
+        <span class="icon">⭐</span>
+        <h1>Daily Horoscope</h1>
+        <p>Choose your sign and receive today's cosmic message</p>
+      </div>
+
+      <div class="card">
+        <label style="display:block; font-size:0.8rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); margin-bottom:1rem;">Select Your Sign</label>
+        <div class="zodiac-grid" id="zodiacGrid">
+          <button class="zodiac-btn" onclick="selectSign(this,'Aries','♈')"><span class="z-icon">♈</span>Aries</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Taurus','♉')"><span class="z-icon">♉</span>Taurus</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Gemini','♊')"><span class="z-icon">♊</span>Gemini</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Cancer','♋')"><span class="z-icon">♋</span>Cancer</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Leo','♌')"><span class="z-icon">♌</span>Leo</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Virgo','♍')"><span class="z-icon">♍</span>Virgo</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Libra','♎')"><span class="z-icon">♎</span>Libra</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Scorpio','♏')"><span class="z-icon">♏</span>Scorpio</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Sagittarius','♐')"><span class="z-icon">♐</span>Sagittarius</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Capricorn','♑')"><span class="z-icon">♑</span>Capricorn</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Aquarius','♒')"><span class="z-icon">♒</span>Aquarius</button>
+          <button class="zodiac-btn" onclick="selectSign(this,'Pisces','♓')"><span class="z-icon">♓</span>Pisces</button>
+        </div>
+        <button class="btn" id="horoBtn" onclick="getHoroscope()" style="margin-top:0.5rem;">🌙 Read My Horoscope</button>
+      </div>
+
+      <div id="loadingDiv" class="loading" style="display:none; justify-content:center;">
+        <div class="spinner"></div>
+        <span>Consulting the stars...</span>
+      </div>
+
+      <div class="result-box" id="result">
+        <div style="text-align:center; font-size:3rem; margin-bottom:0.5rem;" id="signIcon">⭐</div>
+        <div class="result-title" id="resultTitle">Your Reading</div>
+        <div class="result-text" id="resultText"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.8rem; margin-top:1.5rem;" id="extras"></div>
+      </div>
+    </div>
+
+    <footer><p>Made with 💕 by Love Oracle · For entertainment purposes</p></footer>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script>
+    let selectedSign = '', selectedIcon = '';
+
+    function selectSign(btn, sign, icon) {
+      document.querySelectorAll('.zodiac-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedSign = sign;
+      selectedIcon = icon;
+    }
+
+    async function getHoroscope() {
+      if (!selectedSign) { alert('Please select your zodiac sign ⭐'); return; }
+      document.getElementById('horoBtn').disabled = true;
+      document.getElementById('result').classList.remove('show');
+      document.getElementById('loadingDiv').style.display = 'flex';
+
+      const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+      const prompt = `You are a mystical, warm astrologer writing for teens. Write a daily horoscope for ${selectedSign} for ${today}.
+Format your response EXACTLY like this (use these exact labels):
+READING: [3-4 sentences about today's energy, love, and mood. Be poetic and uplifting.]
+LOVE: [one short sentence about love/relationships today]
+LUCKY: [one lucky number between 1-99]
+COLOR: [one lucky color]
+Keep it romantic, dreamy, and positive. No scary predictions.`;
+
+      try {
+        const text = await askGemini(prompt);
+        document.getElementById('loadingDiv').style.display = 'none';
+
+        const reading = text.match(/READING:\s*(.+?)(?=LOVE:|$)/s)?.[1]?.trim() || text;
+        const love = text.match(/LOVE:\s*(.+?)(?=LUCKY:|$)/s)?.[1]?.trim() || '💕 Love is in the air today';
+        const lucky = text.match(/LUCKY:\s*(\d+)/)?.[1] || Math.floor(Math.random()*99+1);
+        const color = text.match(/COLOR:\s*(.+?)(?:\n|$)/)?.[1]?.trim() || 'Rose Gold';
+
+        document.getElementById('signIcon').textContent = selectedIcon;
+        document.getElementById('resultTitle').textContent = `${selectedSign} · ${today}`;
+        document.getElementById('resultText').textContent = reading;
+        document.getElementById('extras').innerHTML = `
+          <div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
+            <div style="font-size:1.4rem">💕</div>
+            <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.3rem 0">Love</div>
+            <div style="font-size:0.8rem;color:var(--soft)">${love}</div>
+          </div>
+          <div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
+            <div style="font-size:1.4rem">🍀</div>
+            <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.3rem 0">Lucky Number</div>
+            <div style="font-size:1.5rem;color:var(--rose);font-family:'Cormorant Garamond',serif">${lucky}</div>
+          </div>
+          <div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
+            <div style="font-size:1.4rem">🎨</div>
+            <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.3rem 0">Lucky Color</div>
+            <div style="font-size:0.85rem;color:var(--blush)">${color}</div>
+          </div>`;
+
+        document.getElementById('result').classList.add('show');
+      } catch(e) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        alert('The stars are cloudy right now... try again 🌙');
+      }
+      document.getElementById('horoBtn').disabled = false;
+    }
+  </script>
+</body>
+</html>
