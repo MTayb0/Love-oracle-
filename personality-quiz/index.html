@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Personality Quiz — Love Oracle</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    .quiz-question { margin-bottom: 1.5rem; }
+    .q-text { font-size: 1rem; color: var(--text); margin-bottom: 0.8rem; font-weight: 400; }
+    .q-options { display: flex; flex-direction: column; gap: 0.5rem; }
+    .q-option {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      color: var(--soft);
+      cursor: pointer;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.88rem;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    .q-option:hover, .q-option.selected {
+      background: rgba(232,65,122,0.15);
+      border-color: var(--rose);
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+  <div class="hearts-bg"></div>
+
+  <div class="page">
+    <nav>
+      <a href="../index.html" class="nav-logo">Love <span>Oracle</span></a>
+      <a href="../index.html" class="nav-back">← Back</a>
+    </nav>
+
+    <div class="tool-page">
+      <div class="tool-header">
+        <span class="icon">🔮</span>
+        <h1>Personality Quiz</h1>
+        <p>Reveal your hidden personality and soulmate traits</p>
+      </div>
+
+      <div class="card" id="quizCard">
+        <div class="quiz-question">
+          <div class="q-text">1. When you have a crush, you usually...</div>
+          <div class="q-options">
+            <button class="q-option" onclick="pick(this,0)">💭 Daydream about them constantly</button>
+            <button class="q-option" onclick="pick(this,0)">💬 Find excuses to talk to them</button>
+            <button class="q-option" onclick="pick(this,0)">📝 Write about your feelings privately</button>
+            <button class="q-option" onclick="pick(this,0)">😎 Play it cool and wait</button>
+          </div>
+        </div>
+        <div class="quiz-question">
+          <div class="q-text">2. Your ideal date is...</div>
+          <div class="q-options">
+            <button class="q-option" onclick="pick(this,1)">🌙 Stargazing on a rooftop</button>
+            <button class="q-option" onclick="pick(this,1)">🎡 Adventure at an amusement park</button>
+            <button class="q-option" onclick="pick(this,1)">☕ Cozy café and deep conversations</button>
+            <button class="q-option" onclick="pick(this,1)">🎵 Concert or live music</button>
+          </div>
+        </div>
+        <div class="quiz-question">
+          <div class="q-text">3. What's your love language?</div>
+          <div class="q-options">
+            <button class="q-option" onclick="pick(this,2)">💌 Sweet messages and love notes</button>
+            <button class="q-option" onclick="pick(this,2)">🤗 Hugs and physical closeness</button>
+            <button class="q-option" onclick="pick(this,2)">🎁 Thoughtful gifts</button>
+            <button class="q-option" onclick="pick(this,2)">⏰ Quality time together</button>
+          </div>
+        </div>
+        <div class="quiz-question">
+          <div class="q-text">4. Which vibe matches your energy?</div>
+          <div class="q-options">
+            <button class="q-option" onclick="pick(this,3)">🌸 Soft and dreamy</button>
+            <button class="q-option" onclick="pick(this,3)">⚡ Bold and passionate</button>
+            <button class="q-option" onclick="pick(this,3)">🌊 Calm and mysterious</button>
+            <button class="q-option" onclick="pick(this,3)">☀️ Bright and playful</button>
+          </div>
+        </div>
+        <div class="quiz-question">
+          <div class="q-text">5. In a relationship you value most...</div>
+          <div class="q-options">
+            <button class="q-option" onclick="pick(this,4)">🔐 Deep trust and loyalty</button>
+            <button class="q-option" onclick="pick(this,4)">😂 Laughter and fun</button>
+            <button class="q-option" onclick="pick(this,4)">💡 Intellectual connection</button>
+            <button class="q-option" onclick="pick(this,4)">🌍 Shared adventures</button>
+          </div>
+        </div>
+        <button class="btn" id="quizBtn" onclick="getResult()" style="margin-top:0.5rem;">🔮 Reveal My Personality</button>
+      </div>
+
+      <div id="loadingDiv" class="loading" style="display:none; justify-content:center;">
+        <div class="spinner"></div>
+        <span>Reading your cosmic blueprint...</span>
+      </div>
+
+      <div class="result-box" id="result">
+        <div style="text-align:center;margin-bottom:1rem;">
+          <div id="pTypeIcon" style="font-size:3rem;"></div>
+          <div id="pTypeName" style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--rose);font-style:italic;margin-top:0.5rem;"></div>
+        </div>
+        <div class="result-title">Your Cosmic Personality</div>
+        <div class="result-text" id="resultText"></div>
+        <div id="soulmate" style="margin-top:1.2rem;padding:1rem;background:var(--glass);border:1px solid var(--border);border-radius:14px;"></div>
+      </div>
+    </div>
+
+    <footer><p>Made with 💕 by Love Oracle · For entertainment purposes</p></footer>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script>
+    const answers = {};
+
+    function pick(btn, qIndex) {
+      btn.closest('.q-options').querySelectorAll('.q-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers[qIndex] = btn.textContent.trim();
+    }
+
+    async function getResult() {
+      if (Object.keys(answers).length < 5) { alert('Please answer all 5 questions 🔮'); return; }
+
+      document.getElementById('quizBtn').disabled = true;
+      document.getElementById('result').classList.remove('show');
+      document.getElementById('loadingDiv').style.display = 'flex';
+
+      const answerList = Object.values(answers).join(' | ');
+      const prompt = `You are a fun personality oracle for teens. Based on these quiz answers: ${answerList}
+
+Create a personality profile. Format EXACTLY like this:
+TYPE: [A creative personality type name like "The Moonlight Dreamer" or "The Passionate Flame"]
+EMOJI: [One single emoji that represents them]
+READING: [3-4 sentences describing their personality, how they love, and their unique magic. Be uplifting and empowering.]
+SOULMATE: [One sentence describing their ideal soulmate/partner traits]
+
+Keep it fun, romantic, and empowering for teens.`;
+
+      try {
+        const text = await askGemini(prompt);
+        const typeName = text.match(/TYPE:\s*(.+?)(?:\n|EMOJI)/s)?.[1]?.trim() || 'The Cosmic Soul';
+        const emoji = text.match(/EMOJI:\s*(.+?)(?:\n|READING)/s)?.[1]?.trim() || '✨';
+        const reading = text.match(/READING:\s*(.+?)(?=SOULMATE:|$)/s)?.[1]?.trim() || text;
+        const soulmate = text.match(/SOULMATE:\s*(.+)/s)?.[1]?.trim() || '';
+
+        document.getElementById('pTypeIcon').textContent = emoji;
+        document.getElementById('pTypeName').textContent = typeName;
+        document.getElementById('resultText').textContent = reading;
+        document.getElementById('soulmate').innerHTML = `<span style="color:var(--gold);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">💕 Your Soulmate</span><br/><span style="color:var(--soft);font-size:0.88rem;line-height:1.6;">${soulmate}</span>`;
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('result').classList.add('show');
+      } catch(e) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        alert('The oracle needs a moment... try again 🔮');
+      }
+      document.getElementById('quizBtn').disabled = false;
+    }
+  </script>
+</body>
+</html>
