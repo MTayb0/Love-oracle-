@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>What Are They Thinking? — Love Oracle</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+  <div class="hearts-bg"></div>
+
+  <div class="page">
+    <nav>
+      <a href="../index.html" class="nav-logo">Love <span>Oracle</span></a>
+      <a href="../index.html" class="nav-back">← Back</a>
+    </nav>
+
+    <div class="tool-page">
+      <div class="tool-header">
+        <span class="icon">💭</span>
+        <h1>What Are They Thinking?</h1>
+        <p>The oracle reads the cosmic energy between you two</p>
+      </div>
+
+      <div class="card">
+        <div class="input-group">
+          <label>Your Name</label>
+          <input type="text" id="myName" placeholder="Your name..." maxlength="30"/>
+        </div>
+        <div class="input-group">
+          <label>Their Name</label>
+          <input type="text" id="theirName" placeholder="The person you're thinking of..." maxlength="30"/>
+        </div>
+        <div class="input-group">
+          <label>Your Relationship</label>
+          <select id="relation">
+            <option value="">Select...</option>
+            <option value="crush I've never spoken to">Secret crush (never spoken)</option>
+            <option value="crush I talk to sometimes">Crush I talk to sometimes</option>
+            <option value="close friend I have feelings for">Close friend I have feelings for</option>
+            <option value="ex I still think about">Ex I still think about</option>
+            <option value="someone I just met">Someone I just met</option>
+            <option value="partner/boyfriend/girlfriend">My partner</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Tell the oracle a little more (optional)</label>
+          <textarea id="context" placeholder="e.g. We made eye contact today, they smiled at me..."></textarea>
+        </div>
+        <button class="btn" id="thinkBtn" onclick="getReading()">💭 Read Their Thoughts</button>
+      </div>
+
+      <div id="loadingDiv" class="loading" style="display:none; justify-content:center;">
+        <div class="spinner"></div>
+        <span>Reading the energy between you...</span>
+      </div>
+
+      <div class="result-box" id="result">
+        <div style="text-align:center;font-size:2.5rem;margin-bottom:0.5rem;">💭</div>
+        <div class="result-title" id="resultTitle">The Oracle Speaks</div>
+        <div class="result-text" id="resultText"></div>
+        <div id="vibeBar" style="margin-top:1.5rem;"></div>
+      </div>
+    </div>
+
+    <footer><p>Made with 💕 by Love Oracle · For entertainment purposes</p></footer>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script>
+    async function getReading() {
+      const myName = document.getElementById('myName').value.trim();
+      const theirName = document.getElementById('theirName').value.trim();
+      const relation = document.getElementById('relation').value;
+      const context = document.getElementById('context').value.trim();
+      if (!myName || !theirName || !relation) { alert('Please fill in your name, their name, and relationship 💭'); return; }
+
+      document.getElementById('thinkBtn').disabled = true;
+      document.getElementById('result').classList.remove('show');
+      document.getElementById('loadingDiv').style.display = 'flex';
+
+      const prompt = `You are a mystical love oracle for teens. ${myName} is asking about ${theirName}, who is their ${relation}.
+${context ? 'Extra context: ' + context : ''}
+
+Give a fun, romantic, and hopeful oracle reading. Format EXACTLY like this:
+TITLE: [A short mystical title like "The Stars Have Spoken" or "Cosmic Whispers Revealed"]
+READING: [4-5 sentences about what ${theirName} might be thinking/feeling about ${myName}. Be poetic, romantic, and uplifting. Give hope but be realistic. Use both names.]
+VIBE: [One word energy vibe like "Curious", "Warm", "Hopeful", "Interested", "Dreaming of you"]
+ADVICE: [One sweet, empowering sentence of advice for ${myName}]
+
+Keep it fun, dreamy, positive, and appropriate for teens. This is for entertainment.`;
+
+      try {
+        const text = await askGemini(prompt);
+        const title = text.match(/TITLE:\s*(.+?)(?:\n|READING)/s)?.[1]?.trim() || 'The Oracle Speaks';
+        const reading = text.match(/READING:\s*(.+?)(?=VIBE:|$)/s)?.[1]?.trim() || text;
+        const vibe = text.match(/VIBE:\s*(.+?)(?:\n|ADVICE)/s)?.[1]?.trim() || 'Hopeful';
+        const advice = text.match(/ADVICE:\s*(.+)/s)?.[1]?.trim() || '';
+
+        document.getElementById('resultTitle').textContent = title;
+        document.getElementById('resultText').textContent = reading;
+        document.getElementById('vibeBar').innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+            <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:center;">
+              <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">Their Energy</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--rose);font-style:italic;">${vibe}</div>
+            </div>
+            <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:center;">
+              <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">Oracle's Advice</div>
+              <div style="font-size:0.8rem;color:var(--soft);line-height:1.5;">${advice}</div>
+            </div>
+          </div>`;
+
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('result').classList.add('show');
+      } catch(e) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        alert('The oracle is resting... try again 💭');
+      }
+      document.getElementById('thinkBtn').disabled = false;
+    }
+  </script>
+</body>
+</html>
