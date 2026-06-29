@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Couple Name Generator — Love Oracle</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+  <div class="hearts-bg"></div>
+
+  <div class="page">
+    <nav>
+      <a href="../index.html" class="nav-logo">Love <span>Oracle</span></a>
+      <a href="../index.html" class="nav-back">← Back</a>
+    </nav>
+
+    <div class="tool-page">
+      <div class="tool-header">
+        <span class="icon">💑</span>
+        <h1>Couple Name Generator</h1>
+        <p>Blend your names and discover your love story</p>
+      </div>
+
+      <div class="card">
+        <div class="input-group">
+          <label>Your Name</label>
+          <input type="text" id="cName1" placeholder="Enter your name..." maxlength="30"/>
+        </div>
+        <div class="input-group">
+          <label>Their Name</label>
+          <input type="text" id="cName2" placeholder="Enter their name..." maxlength="30"/>
+        </div>
+        <button class="btn" id="genBtn" onclick="generateNames()">💑 Create Our Name</button>
+      </div>
+
+      <div id="loadingDiv" class="loading" style="display:none; justify-content:center;">
+        <div class="spinner"></div>
+        <span>Weaving your names together...</span>
+      </div>
+
+      <div class="result-box" id="result">
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;">Your couple name</div>
+          <div id="coupleName" style="font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--rose);font-style:italic;"></div>
+        </div>
+        <div id="nameOptions" style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:1.5rem;"></div>
+        <div class="result-title">Your Love Story</div>
+        <div class="result-text" id="resultText"></div>
+      </div>
+    </div>
+
+    <footer><p>Made with 💕 by Love Oracle · For entertainment purposes</p></footer>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script>
+    async function generateNames() {
+      const n1 = document.getElementById('cName1').value.trim();
+      const n2 = document.getElementById('cName2').value.trim();
+      if (!n1 || !n2) { alert('Please enter both names 💑'); return; }
+
+      document.getElementById('genBtn').disabled = true;
+      document.getElementById('result').classList.remove('show');
+      document.getElementById('loadingDiv').style.display = 'flex';
+
+      const prompt = `You are a romantic, creative couple name oracle. Given the names "${n1}" and "${n2}":
+
+Create couple name combinations and a love story. Format EXACTLY like this:
+MAIN: [The best single combined couple name - blend parts of both names creatively]
+ALT1: [Another cute combination]
+ALT2: [Another option]
+ALT3: [Another option]
+STORY: [3-4 sentences telling their romantic love story. Be poetic, dreamy, and sweet. Use both names. Make it feel like a fairytale.]
+
+Keep it fun, romantic, and shareable for teens.`;
+
+      try {
+        const text = await askGemini(prompt);
+        const main = text.match(/MAIN:\s*(.+?)(?:\n|ALT)/s)?.[1]?.trim() || n1.slice(0,3)+n2.slice(-3);
+        const alt1 = text.match(/ALT1:\s*(.+?)(?:\n|ALT2)/s)?.[1]?.trim() || '';
+        const alt2 = text.match(/ALT2:\s*(.+?)(?:\n|ALT3)/s)?.[1]?.trim() || '';
+        const alt3 = text.match(/ALT3:\s*(.+?)(?:\n|STORY)/s)?.[1]?.trim() || '';
+        const story = text.match(/STORY:\s*(.+)/s)?.[1]?.trim() || text;
+
+        document.getElementById('coupleName').textContent = main;
+        document.getElementById('nameOptions').innerHTML = [alt1, alt2, alt3].filter(Boolean).map(n =>
+          `<div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:0.9rem;text-align:center;font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--blush);font-style:italic;">${n}</div>`
+        ).join('');
+        document.getElementById('resultText').textContent = story;
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('result').classList.add('show');
+      } catch(e) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        alert('The oracle needs a moment... try again 💑');
+      }
+      document.getElementById('genBtn').disabled = false;
+    }
+  </script>
+</body>
+</html>
