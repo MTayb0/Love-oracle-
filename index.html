@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Love Oracle — Your Cosmic Guide to Love & Life</title>
+  <meta name="description" content="Discover your love compatibility, horoscope, birth chart and more. Powered by AI and the stars."/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .tagline-bar {
+      text-align: center;
+      padding: 0.6rem;
+      background: linear-gradient(90deg, transparent, rgba(232,65,122,0.15), transparent);
+      font-size: 0.78rem;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--soft);
+      margin: 3rem 0 1.5rem;
+    }
+
+    .oracle-cta {
+      max-width: 600px;
+      margin: 1rem auto 3rem;
+      background: linear-gradient(135deg, rgba(45,27,105,0.5), rgba(232,65,122,0.15));
+      border: 1px solid rgba(232,65,122,0.35);
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .oracle-cta h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      font-style: italic;
+      color: var(--blush);
+      margin-bottom: 0.5rem;
+    }
+
+    .oracle-cta p {
+      color: var(--soft);
+      font-size: 0.85rem;
+      margin-bottom: 1.3rem;
+      font-weight: 300;
+    }
+
+    .oracle-cta a {
+      display: inline-block;
+      padding: 0.9rem 2.5rem;
+      background: linear-gradient(135deg, var(--rose), #c0306a);
+      border-radius: 14px;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .oracle-cta a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(232,65,122,0.4);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+  <div class="hearts-bg"></div>
+
+  <div class="page">
+    <div class="tagline-bar">✨ The universe holds your answers ✨</div>
+
+    <nav>
+      <a href="index.html" class="nav-logo">Love <span>Oracle</span></a>
+      <span style="font-size:0.8rem; color:var(--soft);">🔮 Powered by AI</span>
+    </nav>
+
+    <section class="hero">
+      <p class="hero-eyebrow">✦ Your cosmic guide ✦</p>
+      <h1 class="hero-title">What do the<br/><em>stars say</em> about you?</h1>
+      <p class="hero-sub">Discover love compatibility, read your horoscope, explore your birth chart — and ask our AI oracle anything your heart desires.</p>
+    </section>
+
+    <p class="section-label">✦ Choose your path ✦</p>
+
+    <div class="tools-grid">
+      <a href="love-calculator/index.html" class="tool-card">
+        <span class="tool-icon">💕</span>
+        <div class="tool-name">Love Calculator</div>
+        <p class="tool-desc">Enter two names and discover your cosmic love compatibility percentage.</p>
+      </a>
+
+      <a href="horoscope/index.html" class="tool-card">
+        <span class="tool-icon">⭐</span>
+        <div class="tool-name">Daily Horoscope</div>
+        <p class="tool-desc">Read what the universe has planned for your sign today.</p>
+      </a>
+
+      <a href="birth-chart/index.html" class="tool-card">
+        <span class="tool-icon">🌙</span>
+        <div class="tool-name">Birth Chart</div>
+        <p class="tool-desc">Reveal your sun, moon, and rising signs from your birth details.</p>
+      </a>
+
+      <a href="couple-names/index.html" class="tool-card">
+        <span class="tool-icon">💑</span>
+        <div class="tool-name">Couple Name Generator</div>
+        <p class="tool-desc">Create a unique couple name and discover your love story.</p>
+      </a>
+
+      <a href="personality-quiz/index.html" class="tool-card">
+        <span class="tool-icon">🔮</span>
+        <div class="tool-name">Personality Quiz</div>
+        <p class="tool-desc">Answer questions and reveal your hidden personality type and soulmate traits.</p>
+      </a>
+
+      <a href="think-of-me/index.html" class="tool-card">
+        <span class="tool-icon">💭</span>
+        <div class="tool-name">What Are They Thinking?</div>
+        <p class="tool-desc">Curious about someone special? The oracle reads the cosmic energy between you.</p>
+      </a>
+
+      <a href="ai-oracle/index.html" class="tool-card" style="grid-column: 1/-1; background: linear-gradient(135deg, rgba(45,27,105,0.4), rgba(232,65,122,0.12)); border-color: rgba(232,65,122,0.4);">
+        <span class="tool-icon">🌌</span>
+        <div class="tool-name" style="color:var(--gold);">AI Love Oracle — Ask Anything</div>
+        <p class="tool-desc">Talk to our AI oracle about love, relationships, crushes, heartbreak — anything. She listens and guides with cosmic wisdom.</p>
+      </a>
+    </div>
+
+    <footer>
+      <p>Made with 💕 by Love Oracle &nbsp;·&nbsp; For entertainment purposes</p>
+    </footer>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
