@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Love Calculator — Love Oracle</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+  <div class="hearts-bg"></div>
+
+  <div class="page">
+    <nav>
+      <a href="../index.html" class="nav-logo">Love <span>Oracle</span></a>
+      <a href="../index.html" class="nav-back">← Back</a>
+    </nav>
+
+    <div class="tool-page">
+      <div class="tool-header">
+        <span class="icon">💕</span>
+        <h1>Love Calculator</h1>
+        <p>Enter two names and let the stars reveal your compatibility</p>
+      </div>
+
+      <div class="card">
+        <div class="input-group">
+          <label>Your Name</label>
+          <input type="text" id="name1" placeholder="Enter your name..." maxlength="40"/>
+        </div>
+        <div class="input-group">
+          <label>Their Name</label>
+          <input type="text" id="name2" placeholder="Enter their name..." maxlength="40"/>
+        </div>
+        <button class="btn" id="calcBtn" onclick="calculate()">✨ Calculate Love ✨</button>
+      </div>
+
+      <div class="result-box" id="result">
+        <div class="love-meter">
+          <div class="love-percent" id="percentNum">0<span>%</span></div>
+          <div id="loveEmoji" style="font-size:2rem; margin:0.5rem 0;">💕</div>
+          <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+        </div>
+        <div class="result-title" id="resultTitle">Your Love Story</div>
+        <div class="result-text" id="resultText"></div>
+      </div>
+
+      <div id="loadingDiv" class="loading" style="display:none; justify-content:center;">
+        <div class="spinner"></div>
+        <span>Reading the cosmic energy...</span>
+      </div>
+    </div>
+
+    <footer><p>Made with 💕 by Love Oracle · For entertainment purposes</p></footer>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script>
+    async function calculate() {
+      const n1 = document.getElementById('name1').value.trim();
+      const n2 = document.getElementById('name2').value.trim();
+      if (!n1 || !n2) { alert('Please enter both names 💕'); return; }
+
+      // Generate a consistent but fun percentage from the names
+      let hash = 0;
+      for (const c of (n1 + n2).toLowerCase()) hash = (hash * 31 + c.charCodeAt(0)) % 100;
+      const pct = Math.max(35, hash === 0 ? 72 : hash);
+
+      document.getElementById('calcBtn').disabled = true;
+      document.getElementById('result').classList.remove('show');
+      document.getElementById('loadingDiv').style.display = 'flex';
+
+      const emoji = pct >= 80 ? '💖' : pct >= 60 ? '💕' : pct >= 40 ? '💛' : '💙';
+      const prompt = `You are a romantic, mystical love oracle. ${n1} and ${n2} have a love compatibility of ${pct}%. 
+Write a short, dreamy, poetic love reading (3-4 sentences) about their connection. 
+Be romantic, hopeful, and mystical. Use cosmic/star metaphors. 
+Start with their names. Keep it sweet and fun for teens.`;
+
+      try {
+        const text = await askGemini(prompt);
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('result').classList.add('show');
+
+        // Animate percentage
+        const numEl = document.getElementById('percentNum');
+        let cur = 0;
+        const tick = setInterval(() => {
+          cur = Math.min(cur + 2, pct);
+          numEl.innerHTML = cur + '<span>%</span>';
+          if (cur >= pct) clearInterval(tick);
+        }, 20);
+
+        document.getElementById('meterFill').style.width = pct + '%';
+        document.getElementById('loveEmoji').textContent = emoji;
+        document.getElementById('resultTitle').textContent =
+          pct >= 80 ? 'A Cosmic Match 💖' :
+          pct >= 60 ? 'Written in the Stars 💕' :
+          pct >= 40 ? 'Gentle Sparks 💛' : 'Different Orbits 💙';
+        document.getElementById('resultText').textContent = text;
+      } catch(e) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        alert('The oracle is resting... please try again 🌙');
+      }
+
+      document.getElementById('calcBtn').disabled = false;
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+  </script>
+</body>
+</html>
