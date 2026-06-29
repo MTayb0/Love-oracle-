@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Birth Chart — Love Oracle</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+</head>
+<body>
+  <canvas id="stars-canvas"></canvas>
+  <div class="hearts-bg"></div>
+
+  <div class="page">
+    <nav>
+      <a href="../index.html" class="nav-logo">Love <span>Oracle</span></a>
+      <a href="../index.html" class="nav-back">← Back</a>
+    </nav>
+
+    <div class="tool-page">
+      <div class="tool-header">
+        <span class="icon">🌙</span>
+        <h1>Birth Chart</h1>
+        <p>Discover your sun, moon & rising signs</p>
+      </div>
+
+      <div class="card">
+        <div class="input-group">
+          <label>Your Name</label>
+          <input type="text" id="bName" placeholder="Enter your name..."/>
+        </div>
+        <div class="input-group">
+          <label>Date of Birth</label>
+          <input type="date" id="bDate"/>
+        </div>
+        <div class="input-group">
+          <label>Time of Birth (approximate is fine)</label>
+          <input type="time" id="bTime"/>
+        </div>
+        <div class="input-group">
+          <label>City of Birth</label>
+          <input type="text" id="bCity" placeholder="e.g. Dubai, Abu Dhabi, Cairo..."/>
+        </div>
+        <button class="btn" id="chartBtn" onclick="getChart()">🌙 Reveal My Birth Chart</button>
+      </div>
+
+      <div id="loadingDiv" class="loading" style="display:none; justify-content:center;">
+        <div class="spinner"></div>
+        <span>Mapping the cosmos at your birth...</span>
+      </div>
+
+      <div class="result-box" id="result">
+        <div class="result-title">Your Cosmic Blueprint</div>
+        <div id="signsRow" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;"></div>
+        <div class="result-text" id="resultText"></div>
+      </div>
+    </div>
+
+    <footer><p>Made with 💕 by Love Oracle · For entertainment purposes</p></footer>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script>
+    async function getChart() {
+      const name = document.getElementById('bName').value.trim();
+      const date = document.getElementById('bDate').value;
+      const time = document.getElementById('bTime').value;
+      const city = document.getElementById('bCity').value.trim();
+      if (!name || !date) { alert('Please enter your name and date of birth 🌙'); return; }
+
+      document.getElementById('chartBtn').disabled = true;
+      document.getElementById('result').classList.remove('show');
+      document.getElementById('loadingDiv').style.display = 'flex';
+
+      const prompt = `You are a mystical astrologer. Based on these birth details:
+Name: ${name}
+Date: ${date}
+Time: ${time || 'unknown'}
+City: ${city || 'unknown'}
+
+Provide a fun, romantic birth chart reading for a teen. Format EXACTLY like this:
+SUN: [sun sign name]
+MOON: [moon sign name]  
+RISING: [rising/ascendant sign, if time unknown make a best guess]
+READING: [4-5 sentences describing their personality, love style, and cosmic gifts. Be warm, poetic, and uplifting. Use ${name}'s name.]
+
+Keep it mystical, fun, and positive.`;
+
+      try {
+        const text = await askGemini(prompt);
+        const sun = text.match(/SUN:\s*(.+?)(?:\n|MOON)/s)?.[1]?.trim() || 'Radiant';
+        const moon = text.match(/MOON:\s*(.+?)(?:\n|RISING)/s)?.[1]?.trim() || 'Dreamy';
+        const rising = text.match(/RISING:\s*(.+?)(?:\n|READING)/s)?.[1]?.trim() || 'Mystical';
+        const reading = text.match(/READING:\s*(.+)/s)?.[1]?.trim() || text;
+
+        document.getElementById('signsRow').innerHTML = `
+          <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center;">
+            <div style="font-size:1.8rem">☀️</div>
+            <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.4rem 0">Sun Sign</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${sun}</div>
+          </div>
+          <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center;">
+            <div style="font-size:1.8rem">🌙</div>
+            <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.4rem 0">Moon Sign</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${moon}</div>
+          </div>
+          <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center;">
+            <div style="font-size:1.8rem">⬆️</div>
+            <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.4rem 0">Rising Sign</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${rising}</div>
+          </div>`;
+
+        document.getElementById('resultText').textContent = reading;
+        document.getElementById('loadingDiv').style.display = 'none';
+        document.getElementById('result').classList.add('show');
+      } catch(e) {
+        document.getElementById('loadingDiv').style.display = 'none';
+        alert('The cosmos need a moment... try again 🌙');
+      }
+      document.getElementById('chartBtn').disabled = false;
+    }
+  </script>
+</body>
+</html>
