@@ -1,5 +1,5 @@
 // ── API KEY ── Replace with your Gemini API key
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';
+const GEMINI_API_KEY = 'AQ.Ab8RN6K8FagGp5zGXdN2-QxZS2HHA0eMSiCloY3W_3X0xdtpEw';
 
 // ── Gemini API call ──
 async function askGemini(prompt) {
