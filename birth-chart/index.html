@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Birth Chart — Love Oracle</title>
-  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
@@ -24,19 +24,19 @@
       <div class="card">
         <div class="input-group">
           <label>Your Name</label>
-          <input type="text" id="bName" placeholder="Enter your name..."/>
+          <input type="text" id="bName" placeholder="Enter your name..." />
         </div>
         <div class="input-group">
           <label>Date of Birth</label>
-          <input type="date" id="bDate"/>
+          <input type="date" id="bDate" />
         </div>
         <div class="input-group">
           <label>Time of Birth (approximate is fine)</label>
-          <input type="time" id="bTime"/>
+          <input type="time" id="bTime" />
         </div>
         <div class="input-group">
           <label>City of Birth</label>
-          <input type="text" id="bCity" placeholder="e.g. Dubai, Abu Dhabi, Cairo..."/>
+          <input type="text" id="bCity" placeholder="e.g. Dubai, Abu Dhabi, Cairo..." />
         </div>
         <button class="btn" id="chartBtn" onclick="getChart()">🌙 Reveal My Birth Chart</button>
       </div>
@@ -60,12 +60,39 @@
 
   <script src="../js/main.js"></script>
   <script>
+    // ── Ultra‑robust JSON parser (built-in, overrides main.js) ──
+    function parseJsonSafely(text) {
+      try {
+        // 1. Extract the first { ... } block
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+          console.error('No JSON object found. Raw:', text);
+          return null;
+        }
+
+        let jsonStr = text.substring(firstBrace, lastBrace + 1);
+
+        // 2. Remove trailing commas inside objects/arrays (common AI mistake)
+        jsonStr = jsonStr.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+
+        // 3. Try parsing
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        console.error('Failed to parse JSON. Raw response:', text);
+        return null;
+      }
+    }
+
     async function getChart() {
       const name = document.getElementById('bName').value.trim();
       const date = document.getElementById('bDate').value;
       const time = document.getElementById('bTime').value;
       const city = document.getElementById('bCity').value.trim();
-      if (!name || !date) { alert('Please enter your name and date of birth 🌙'); return; }
+      if (!name || !date) {
+        alert('Please enter your name and date of birth 🌙');
+        return;
+      }
 
       const btn = document.getElementById('chartBtn');
       const resultBox = document.getElementById('result');
@@ -81,7 +108,9 @@ Date: ${date}
 Time: ${time || 'unknown'}
 City: ${city || 'unknown'}
 
-Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+IMPORTANT: Reply with ONLY valid JSON. DO NOT write any text before or after the JSON. 
+Your response must start with { and end with }.
+Use exactly this shape:
 {
   "sun": "sun sign name",
   "moon": "moon sign name",
@@ -91,7 +120,7 @@ Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this
 
       try {
         const raw = await askGemini(prompt, { json: true });
-        const data = safeParseJSON(raw);
+        const data = parseJsonSafely(raw);
         if (!data || !data.reading) {
           throw new Error('The oracle\'s response could not be understood. Please try again.');
         }
