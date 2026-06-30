@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
-  <canvas id="stars-canvas"></canvas>
-  <div class="hearts-bg"></div>
 
   <div class="page">
     <nav>
@@ -48,6 +46,8 @@
         <span>Mapping the cosmos at your birth...</span>
       </div>
 
+      <div id="errorBox" style="display:none; margin-top:1rem;"></div>
+
       <div class="result-box" id="result">
         <div class="result-title">Your Cosmic Blueprint</div>
         <div id="signsRow" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.8rem; margin-bottom:1.5rem;"></div>
@@ -67,8 +67,12 @@
       const city = document.getElementById('bCity').value.trim();
       if (!name || !date) { alert('Please enter your name and date of birth 🌙'); return; }
 
-      document.getElementById('chartBtn').disabled = true;
-      document.getElementById('result').classList.remove('show');
+      const btn = document.getElementById('chartBtn');
+      const resultBox = document.getElementById('result');
+      const errorBox = document.getElementById('errorBox');
+      btn.disabled = true;
+      resultBox.classList.remove('show');
+      errorBox.style.display = 'none';
       document.getElementById('loadingDiv').style.display = 'flex';
 
       const prompt = `You are a mystical astrologer. Based on these birth details:
@@ -77,46 +81,46 @@ Date: ${date}
 Time: ${time || 'unknown'}
 City: ${city || 'unknown'}
 
-Provide a fun, romantic birth chart reading for a teen. Format EXACTLY like this:
-SUN: [sun sign name]
-MOON: [moon sign name]  
-RISING: [rising/ascendant sign, if time unknown make a best guess]
-READING: [4-5 sentences describing their personality, love style, and cosmic gifts. Be warm, poetic, and uplifting. Use ${name}'s name.]
-
-Keep it mystical, fun, and positive.`;
+Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+{
+  "sun": "sun sign name",
+  "moon": "moon sign name",
+  "rising": "rising/ascendant sign (best guess if time unknown)",
+  "reading": "4-5 warm, poetic sentences about ${name}'s personality, love style, and cosmic gifts, using their name"
+}`;
 
       try {
-        const text = await askGemini(prompt);
-        const sun = text.match(/SUN:\s*(.+?)(?:\n|MOON)/s)?.[1]?.trim() || 'Radiant';
-        const moon = text.match(/MOON:\s*(.+?)(?:\n|RISING)/s)?.[1]?.trim() || 'Dreamy';
-        const rising = text.match(/RISING:\s*(.+?)(?:\n|READING)/s)?.[1]?.trim() || 'Mystical';
-        const reading = text.match(/READING:\s*(.+)/s)?.[1]?.trim() || text;
+        const raw = await askGemini(prompt, { json: true });
+        const data = safeParseJSON(raw);
+        if (!data || !data.reading) {
+          throw new Error('The oracle\'s response could not be understood. Please try again.');
+        }
 
         document.getElementById('signsRow').innerHTML = `
           <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center;">
             <div style="font-size:1.8rem">☀️</div>
             <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.4rem 0">Sun Sign</div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${sun}</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${data.sun || '—'}</div>
           </div>
           <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center;">
             <div style="font-size:1.8rem">🌙</div>
             <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.4rem 0">Moon Sign</div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${moon}</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${data.moon || '—'}</div>
           </div>
           <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1.2rem;text-align:center;">
             <div style="font-size:1.8rem">⬆️</div>
             <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.4rem 0">Rising Sign</div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${rising}</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--blush)">${data.rising || '—'}</div>
           </div>`;
 
-        document.getElementById('resultText').textContent = reading;
+        document.getElementById('resultText').textContent = data.reading;
         document.getElementById('loadingDiv').style.display = 'none';
-        document.getElementById('result').classList.add('show');
-      } catch(e) {
+        resultBox.classList.add('show');
+      } catch (err) {
         document.getElementById('loadingDiv').style.display = 'none';
-        alert('The cosmos need a moment... try again 🌙');
+        showOracleError(err, errorBox);
       }
-      document.getElementById('chartBtn').disabled = false;
+      btn.disabled = false;
     }
   </script>
 </body>
