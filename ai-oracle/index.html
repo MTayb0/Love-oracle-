@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
-  <canvas id="stars-canvas"></canvas>
-  <div class="hearts-bg"></div>
 
   <div class="page">
     <nav>
@@ -97,13 +95,26 @@ If someone seems very sad or mentions serious issues, gently suggest talking to 
             })
           }
         );
+
+        if (!res.ok) {
+          let detail = '';
+          try { detail = (await res.json())?.error?.message || ''; } catch (e) {}
+          throw new Error('AI service error (' + res.status + '). ' + detail);
+        }
+
         const data = await res.json();
-        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'The stars are quiet right now... ask me again 🌙';
+        const blockReason = data.promptFeedback?.blockReason;
+        if (blockReason) throw new Error('That message was blocked by safety filters. Try rephrasing.');
+
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!reply) throw new Error('The oracle returned an empty response.');
 
         history.push({ role: 'model', parts: [{ text: reply }] });
         typingDiv.textContent = reply;
       } catch(e) {
-        typingDiv.textContent = '🌙 The cosmic connection flickered... please ask again.';
+        console.error('Love Oracle chat error:', e);
+        typingDiv.textContent = '🌩️ ' + (e.message || 'Something went wrong. Please try again.');
+        typingDiv.style.color = '#ffd9e3';
       }
 
       input.disabled = false;
