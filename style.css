@@ -1,17 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Quicksand:wght@300;400;500&display=swap');
 
 :root {
-  --deep: #0d0720;
-  --midnight: #120a2e;
-  --violet: #2d1b69;
+  --deep: #1a1335;
+  --midnight: #2b1f4d;
+  --violet: #4a2f6e;
   --rose: #e8417a;
   --blush: #f7a8c4;
   --gold: #f4c97a;
+  --dawn-pink: #ff9a8b;
+  --dawn-orange: #ffc796;
   --mist: rgba(255,255,255,0.07);
-  --glass: rgba(255,255,255,0.05);
-  --border: rgba(232,65,122,0.2);
-  --text: #f0e8ff;
-  --soft: rgba(240,232,255,0.6);
+  --glass: rgba(255,255,255,0.06);
+  --border: rgba(232,65,122,0.22);
+  --text: #fff3f7;
+  --soft: rgba(255,243,247,0.65);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -20,15 +22,15 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Quicksand', sans-serif;
-  background: var(--deep);
+  background: linear-gradient(180deg, #1a1335 0%, #2b1f4d 22%, #5a3a6b 45%, #b85a72 68%, #ff9a8b 85%, #ffc796 100%);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
 }
 
-/* ── Starfield ── */
-#stars-canvas {
+/* ── Dawn village scene ── */
+#scene-canvas {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
@@ -36,27 +38,130 @@ body {
   pointer-events: none;
 }
 
-/* ── Floating hearts ── */
-.hearts-bg {
+.scene-layer {
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.silhouette-hills {
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%;
+  height: 38vh;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Moon ── */
+.moon {
+  position: fixed;
+  top: 8%;
+  right: 12%;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff8e8, #f4dba0 60%, #e8c074 100%);
+  box-shadow: 0 0 50px 12px rgba(244,201,122,0.35);
+  z-index: 1;
+  animation: moonGlow 6s ease-in-out infinite;
+}
+
+@keyframes moonGlow {
+  0%, 100% { box-shadow: 0 0 50px 12px rgba(244,201,122,0.35); }
+  50% { box-shadow: 0 0 65px 18px rgba(244,201,122,0.5); }
+}
+
+/* ── Stars (sparse, only in upper sky) ── */
+.sky-star {
+  position: fixed;
+  width: 3px; height: 3px;
+  background: #fff;
+  border-radius: 50%;
+  z-index: 1;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.9; }
+}
+
+/* ── Birds ── */
+.bird {
+  position: fixed;
+  z-index: 2;
+  font-size: 1rem;
+  color: #2b1f3d;
+  opacity: 0.75;
+  animation: birdFly linear infinite;
+}
+
+.bird::before { content: '⌃'; display: inline-block; transform: scaleX(1.6); }
+
+@keyframes birdFly {
+  0%   { transform: translate(-10vw, 0) scaleX(1); }
+  48%  { transform: translate(55vw, -3vh) scaleX(1); }
+  50%  { transform: translate(58vw, -3vh) scaleX(-1); }
+  100% { transform: translate(110vw, -8vh) scaleX(-1); }
+}
+
+/* ── Hills silhouette (SVG handles shape, this is just the wrapper) ── */
+.silhouette-hills svg { width: 100%; height: 100%; display: block; }
+
+/* ── Tree + couple silhouette ── */
+.scene-figures {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90vw, 420px);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.scene-figures svg { width: 100%; display: block; }
+
+.leaf-sway {
+  animation: sway 5s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+}
+
+/* ── Fireflies / floating particles near the couple ── */
+.firefly {
+  position: fixed;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #ffe3a8;
+  box-shadow: 0 0 6px 2px rgba(255,227,168,0.8);
+  z-index: 2;
+  opacity: 0;
+  animation: fireflyFloat ease-in-out infinite;
+}
+
+@keyframes fireflyFloat {
+  0%   { opacity: 0; transform: translateY(0) translateX(0); }
+  20%  { opacity: 0.9; }
+  50%  { transform: translateY(-25px) translateX(10px); }
+  80%  { opacity: 0.6; }
+  100% { opacity: 0; transform: translateY(-50px) translateX(-8px); }
+}
+
+/* Soft overlay so text/cards stay readable over a bright dawn sky */
+.scene-overlay {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
+  background: linear-gradient(180deg, rgba(13,7,32,0.35) 0%, rgba(13,7,32,0.15) 35%, rgba(20,10,30,0.45) 100%);
   z-index: 1;
   pointer-events: none;
-  overflow: hidden;
-}
-
-.heart-float {
-  position: absolute;
-  bottom: -60px;
-  font-size: 1.2rem;
-  opacity: 0;
-  animation: floatUp linear infinite;
-}
-
-@keyframes floatUp {
-  0%   { transform: translateY(0) rotate(0deg); opacity: 0.6; }
-  100% { transform: translateY(-110vh) rotate(20deg); opacity: 0; }
 }
 
 /* ── Page wrapper ── */
