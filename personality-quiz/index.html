@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Personality Quiz — Love Oracle</title>
-  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/style.css" />
   <style>
     .quiz-question { margin-bottom: 1.5rem; }
     .q-text { font-size: 1rem; color: var(--text); margin-bottom: 0.8rem; font-weight: 400; }
@@ -115,6 +115,24 @@
 
   <script src="../js/main.js"></script>
   <script>
+    // ── Ultra‑robust JSON parser (local, overrides main.js) ──
+    function parseJsonSafely(text) {
+      try {
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+          console.error('No JSON object found. Raw:', text);
+          return null;
+        }
+        let jsonStr = text.substring(firstBrace, lastBrace + 1);
+        jsonStr = jsonStr.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        console.error('Failed to parse JSON. Raw response:', text);
+        return null;
+      }
+    }
+
     const answers = {};
 
     function pick(btn, qIndex) {
@@ -124,7 +142,10 @@
     }
 
     async function getResult() {
-      if (Object.keys(answers).length < 5) { alert('Please answer all 5 questions 🔮'); return; }
+      if (Object.keys(answers).length < 5) {
+        alert('Please answer all 5 questions 🔮');
+        return;
+      }
 
       const btn = document.getElementById('quizBtn');
       const resultBox = document.getElementById('result');
@@ -136,7 +157,9 @@
 
       const answerList = Object.values(answers).join(' | ');
       const prompt = `You are a fun personality oracle for teens. Based on these quiz answers: ${answerList}
-Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+IMPORTANT: Reply with ONLY valid JSON. DO NOT write any text before or after the JSON.
+Your response must start with { and end with }.
+Use exactly this shape:
 {
   "type": "a creative personality type name like 'The Moonlight Dreamer' or 'The Passionate Flame'",
   "emoji": "one single emoji representing them",
@@ -146,7 +169,7 @@ Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this
 
       try {
         const raw = await askGemini(prompt, { json: true });
-        const data = safeParseJSON(raw);
+        const data = parseJsonSafely(raw);
         if (!data || !data.reading) {
           throw new Error('The oracle\'s response could not be understood. Please try again.');
         }
@@ -154,7 +177,10 @@ Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this
         document.getElementById('pTypeIcon').textContent = data.emoji || '✨';
         document.getElementById('pTypeName').textContent = data.type || 'The Cosmic Soul';
         document.getElementById('resultText').textContent = data.reading;
-        document.getElementById('soulmate').innerHTML = `<span style="color:var(--gold);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">💕 Your Soulmate</span><br/><span style="color:var(--soft);font-size:0.88rem;line-height:1.6;">${data.soulmate || ''}</span>`;
+        document.getElementById('soulmate').innerHTML =
+          `<span style="color:var(--gold);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">💕 Your Soulmate</span><br/>
+          <span style="color:var(--soft);font-size:0.88rem;line-height:1.6;">${data.soulmate || ''}</span>`;
+
         document.getElementById('loadingDiv').style.display = 'none';
         resultBox.classList.add('show');
       } catch (err) {
