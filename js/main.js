@@ -1,31 +1,25 @@
-// ── API KEY ── Replace with your Gemini API key
-const GEMINI_API_KEY = 'AQ.Ab8RN6IMvys0t_FJI_qDUs2C6FTJa4UUTfJd5oqVdqS8JjobUg';
+// ── Proxy URL ── Calls go through our Deno proxy, which holds the real
+// Gemini API key server-side. No API key lives in this file anymore.
+const PROXY_URL = 'https://royal-dodo-1799.mtayb0.deno.net';
 
-// ── Gemini API call ──
+// ── Gemini API call (via proxy) ──
 // Throws a descriptive error instead of failing silently, so pages can show
-// the user what actually went wrong (bad key, quota, network, etc).
+// the user what actually went wrong (quota, network, etc).
 async function askGemini(prompt, { json = false } = {}) {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-    throw new Error('No Gemini API key has been set in js/main.js yet.');
-  }
-
   let res;
   try {
-    res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 700,
-            ...(json ? { responseMimeType: 'application/json' } : {})
-          }
-        })
-      }
-    );
+    res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.9,
+          maxOutputTokens: 700,
+          ...(json ? { responseMimeType: 'application/json' } : {})
+        }
+      })
+    });
   } catch (networkErr) {
     throw new Error('Could not reach the AI service. Check your internet connection.');
   }
@@ -33,9 +27,6 @@ async function askGemini(prompt, { json = false } = {}) {
   if (!res.ok) {
     let detail = '';
     try { detail = (await res.json())?.error?.message || ''; } catch (e) {}
-    if (res.status === 400 || res.status === 403) {
-      throw new Error('The API key was rejected. Re-check it in js/main.js and its website restrictions. ' + detail);
-    }
     if (res.status === 429) {
       throw new Error('Free quota reached for now — try again in a minute.');
     }
