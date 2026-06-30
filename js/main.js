@@ -120,4 +120,63 @@ function buildSceneScaffold() {
       <rect x="170" y="222" width="80" height="6" rx="2" fill="#1a1330"/>
       <rect x="178" y="228" width="6" height="14" fill="#1a1330"/>
       <rect x="238" y="228" width="6" height="14" fill="#1a1330"/>
-      <!-- girl
+      <!-- girl sitting (left) -->
+      <g fill="#1a1330">
+        <circle cx="192" cy="196" r="9"/>
+        <path d="M183,205 Q180,222 186,224 L198,224 Q202,222 200,205 Z"/>
+        <path d="M186,224 L184,222 L188,222 Z"/>
+        <path d="M198,224 L196,222 L200,222 Z"/>
+      </g>
+      <!-- boy sitting (right) -->
+      <g fill="#1a1330">
+        <circle cx="230" cy="195" r="9"/>
+        <path d="M221,204 Q218,222 224,224 L237,224 Q241,222 239,204 Z"/>
+        <path d="M224,224 L222,222 L226,222 Z"/>
+        <path d="M237,224 L235,222 L239,222 Z"/>
+      </g>
+    </svg>`;
+  document.body.insertBefore(figures, page);
+
+  // Sparse stars confined to upper third of the sky
+  for (let i = 0; i < 35; i++) {
+    const star = document.createElement('div');
+    star.className = 'sky-star';
+    star.style.left = Math.random() * 100 + 'vw';
+    star.style.top = (Math.random() * 30) + 'vh';
+    star.style.animationDelay = (Math.random() * 3) + 's';
+    document.body.insertBefore(star, page);
+  }
+
+  // Birds crossing the sky periodically
+  function spawnBird() {
+    const bird = document.createElement('div');
+    bird.className = 'bird';
+    bird.style.top = (Math.random() * 20 + 5) + 'vh';
+    const dur = Math.random() * 6 + 10;
+    bird.style.animationDuration = dur + 's';
+    bird.style.fontSize = (Math.random() * 0.5 + 0.7) + 'rem';
+    document.body.insertBefore(bird, page);
+    setTimeout(() => bird.remove(), dur * 1000);
+  }
+  for (let i = 0; i < 3; i++) setTimeout(spawnBird, i * 2000);
+  setInterval(spawnBird, 7000);
+
+  // Fireflies drifting near the couple under the tree
+  function spawnFirefly() {
+    const fly = document.createElement('div');
+    fly.className = 'firefly';
+    fly.style.left = (45 + Math.random() * 14) + 'vw';
+    fly.style.bottom = (Math.random() * 12 + 4) + 'vh';
+    const dur = Math.random() * 3 + 3;
+    fly.style.animationDuration = dur + 's';
+    document.body.insertBefore(fly, page);
+    setTimeout(() => fly.remove(), dur * 1000);
+  }
+  setInterval(spawnFirefly, 900);
+  for (let i = 0; i < 5; i++) setTimeout(spawnFirefly, i * 400);
+}
+
+// ── Init on load ──
+document.addEventListener('DOMContentLoaded', () => {
+  buildSceneScaffold();
+});
