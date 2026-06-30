@@ -1,5 +1,5 @@
 // ── API KEY ── Replace with your Gemini API key
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';
+const GEMINI_API_KEY = 'AQ.Ab8RN6IMvys0t_FJI_qDUs2C6FTJa4UUTfJd5oqVdqS8JjobUg';
 
 // ── Gemini API call ──
 // Throws a descriptive error instead of failing silently, so pages can show
