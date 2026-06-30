@@ -46,13 +46,28 @@ async function askGemini(prompt, { json = false } = {}) {
   return text.trim();
 }
 
-// Strips ```json fences etc and parses JSON safely. Returns null on failure
-// so callers can fall back gracefully instead of crashing.
+// ── Improved JSON parsing ──
+// Now extracts the JSON object from anywhere in the text, even if the AI
+// adds extra fluff around it. Also logs the raw text if parsing fails.
 function safeParseJSON(text) {
   try {
+    // 1. First, try to find the actual JSON object boundaries { ... }
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      const jsonStr = text.substring(firstBrace, lastBrace + 1);
+      // Try parsing just the extracted JSON
+      return JSON.parse(jsonStr);
+    }
+
+    // 2. Fallback: strip markdown fences and try again
     const clean = text.replace(/```json|```/g, '').trim();
     return JSON.parse(clean);
+    
   } catch (e) {
+    // 3. Log the raw text so you can debug if it happens again
+    console.error('Failed to parse JSON. Raw response:', text);
     return null;
   }
 }
