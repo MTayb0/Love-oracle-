@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
-  <canvas id="stars-canvas"></canvas>
-  <div class="hearts-bg"></div>
 
   <div class="page">
     <nav>
@@ -40,6 +38,8 @@
         <span>Weaving your names together...</span>
       </div>
 
+      <div id="errorBox" style="display:none; margin-top:1rem;"></div>
+
       <div class="result-box" id="result">
         <div style="text-align:center; margin-bottom:1.5rem;">
           <div style="font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem;">Your couple name</div>
@@ -61,41 +61,43 @@
       const n2 = document.getElementById('cName2').value.trim();
       if (!n1 || !n2) { alert('Please enter both names 💑'); return; }
 
-      document.getElementById('genBtn').disabled = true;
-      document.getElementById('result').classList.remove('show');
+      const btn = document.getElementById('genBtn');
+      const resultBox = document.getElementById('result');
+      const errorBox = document.getElementById('errorBox');
+      btn.disabled = true;
+      resultBox.classList.remove('show');
+      errorBox.style.display = 'none';
       document.getElementById('loadingDiv').style.display = 'flex';
 
       const prompt = `You are a romantic, creative couple name oracle. Given the names "${n1}" and "${n2}":
-
-Create couple name combinations and a love story. Format EXACTLY like this:
-MAIN: [The best single combined couple name - blend parts of both names creatively]
-ALT1: [Another cute combination]
-ALT2: [Another option]
-ALT3: [Another option]
-STORY: [3-4 sentences telling their romantic love story. Be poetic, dreamy, and sweet. Use both names. Make it feel like a fairytale.]
-
-Keep it fun, romantic, and shareable for teens.`;
+Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+{
+  "main": "the best single combined couple name, blending parts of both names creatively",
+  "alt1": "another cute combination",
+  "alt2": "another option",
+  "alt3": "another option",
+  "story": "3-4 poetic, fairytale-like sentences telling their romantic love story using both names"
+}`;
 
       try {
-        const text = await askGemini(prompt);
-        const main = text.match(/MAIN:\s*(.+?)(?:\n|ALT)/s)?.[1]?.trim() || n1.slice(0,3)+n2.slice(-3);
-        const alt1 = text.match(/ALT1:\s*(.+?)(?:\n|ALT2)/s)?.[1]?.trim() || '';
-        const alt2 = text.match(/ALT2:\s*(.+?)(?:\n|ALT3)/s)?.[1]?.trim() || '';
-        const alt3 = text.match(/ALT3:\s*(.+?)(?:\n|STORY)/s)?.[1]?.trim() || '';
-        const story = text.match(/STORY:\s*(.+)/s)?.[1]?.trim() || text;
+        const raw = await askGemini(prompt, { json: true });
+        const data = safeParseJSON(raw);
+        if (!data || !data.story) {
+          throw new Error('The oracle\'s response could not be understood. Please try again.');
+        }
 
-        document.getElementById('coupleName').textContent = main;
-        document.getElementById('nameOptions').innerHTML = [alt1, alt2, alt3].filter(Boolean).map(n =>
+        document.getElementById('coupleName').textContent = data.main || (n1.slice(0,3) + n2.slice(-3));
+        document.getElementById('nameOptions').innerHTML = [data.alt1, data.alt2, data.alt3].filter(Boolean).map(n =>
           `<div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:0.9rem;text-align:center;font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--blush);font-style:italic;">${n}</div>`
         ).join('');
-        document.getElementById('resultText').textContent = story;
+        document.getElementById('resultText').textContent = data.story;
         document.getElementById('loadingDiv').style.display = 'none';
-        document.getElementById('result').classList.add('show');
-      } catch(e) {
+        resultBox.classList.add('show');
+      } catch (err) {
         document.getElementById('loadingDiv').style.display = 'none';
-        alert('The oracle needs a moment... try again 💑');
+        showOracleError(err, errorBox);
       }
-      document.getElementById('genBtn').disabled = false;
+      btn.disabled = false;
     }
   </script>
 </body>
