@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
-  <canvas id="stars-canvas"></canvas>
-  <div class="hearts-bg"></div>
 
   <div class="page">
     <nav>
@@ -47,6 +45,8 @@
         <span>Consulting the stars...</span>
       </div>
 
+      <div id="errorBox" style="display:none; margin-top:1rem;"></div>
+
       <div class="result-box" id="result">
         <div style="text-align:center; font-size:3rem; margin-bottom:0.5rem;" id="signIcon">⭐</div>
         <div class="result-title" id="resultTitle">Your Reading</div>
@@ -71,54 +71,57 @@
 
     async function getHoroscope() {
       if (!selectedSign) { alert('Please select your zodiac sign ⭐'); return; }
-      document.getElementById('horoBtn').disabled = true;
-      document.getElementById('result').classList.remove('show');
+      const btn = document.getElementById('horoBtn');
+      const resultBox = document.getElementById('result');
+      const errorBox = document.getElementById('errorBox');
+      btn.disabled = true;
+      resultBox.classList.remove('show');
+      errorBox.style.display = 'none';
       document.getElementById('loadingDiv').style.display = 'flex';
 
       const today = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
       const prompt = `You are a mystical, warm astrologer writing for teens. Write a daily horoscope for ${selectedSign} for ${today}.
-Format your response EXACTLY like this (use these exact labels):
-READING: [3-4 sentences about today's energy, love, and mood. Be poetic and uplifting.]
-LOVE: [one short sentence about love/relationships today]
-LUCKY: [one lucky number between 1-99]
-COLOR: [one lucky color]
-Keep it romantic, dreamy, and positive. No scary predictions.`;
+Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+{
+  "reading": "3-4 poetic, uplifting sentences about today's energy, love, and mood",
+  "love": "one short sentence about love/relationships today",
+  "lucky_number": 42,
+  "lucky_color": "a color name"
+}`;
 
       try {
-        const text = await askGemini(prompt);
+        const raw = await askGemini(prompt, { json: true });
+        const data = safeParseJSON(raw);
+        if (!data || !data.reading) {
+          throw new Error('The oracle\'s response could not be understood. Please try again.');
+        }
+
         document.getElementById('loadingDiv').style.display = 'none';
-
-        const reading = text.match(/READING:\s*(.+?)(?=LOVE:|$)/s)?.[1]?.trim() || text;
-        const love = text.match(/LOVE:\s*(.+?)(?=LUCKY:|$)/s)?.[1]?.trim() || '💕 Love is in the air today';
-        const lucky = text.match(/LUCKY:\s*(\d+)/)?.[1] || Math.floor(Math.random()*99+1);
-        const color = text.match(/COLOR:\s*(.+?)(?:\n|$)/)?.[1]?.trim() || 'Rose Gold';
-
         document.getElementById('signIcon').textContent = selectedIcon;
         document.getElementById('resultTitle').textContent = `${selectedSign} · ${today}`;
-        document.getElementById('resultText').textContent = reading;
+        document.getElementById('resultText').textContent = data.reading;
         document.getElementById('extras').innerHTML = `
           <div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
             <div style="font-size:1.4rem">💕</div>
             <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.3rem 0">Love</div>
-            <div style="font-size:0.8rem;color:var(--soft)">${love}</div>
+            <div style="font-size:0.8rem;color:var(--soft)">${data.love || '—'}</div>
           </div>
           <div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
             <div style="font-size:1.4rem">🍀</div>
             <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.3rem 0">Lucky Number</div>
-            <div style="font-size:1.5rem;color:var(--rose);font-family:'Cormorant Garamond',serif">${lucky}</div>
+            <div style="font-size:1.5rem;color:var(--rose);font-family:'Cormorant Garamond',serif">${data.lucky_number ?? '—'}</div>
           </div>
           <div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center;">
             <div style="font-size:1.4rem">🎨</div>
             <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin:0.3rem 0">Lucky Color</div>
-            <div style="font-size:0.85rem;color:var(--blush)">${color}</div>
+            <div style="font-size:0.85rem;color:var(--blush)">${data.lucky_color || '—'}</div>
           </div>`;
-
-        document.getElementById('result').classList.add('show');
-      } catch(e) {
+        resultBox.classList.add('show');
+      } catch (err) {
         document.getElementById('loadingDiv').style.display = 'none';
-        alert('The stars are cloudy right now... try again 🌙');
+        showOracleError(err, errorBox);
       }
-      document.getElementById('horoBtn').disabled = false;
+      btn.disabled = false;
     }
   </script>
 </body>
