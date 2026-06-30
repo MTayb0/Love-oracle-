@@ -56,10 +56,31 @@
 
   <script src="../js/main.js"></script>
   <script>
+    // ── Ultra‑robust JSON parser (local) ──
+    function parseJsonSafely(text) {
+      try {
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+          console.error('No JSON object found. Raw:', text);
+          return null;
+        }
+        let jsonStr = text.substring(firstBrace, lastBrace + 1);
+        jsonStr = jsonStr.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        console.error('Failed to parse JSON. Raw response:', text);
+        return null;
+      }
+    }
+
     async function generateNames() {
       const n1 = document.getElementById('cName1').value.trim();
       const n2 = document.getElementById('cName2').value.trim();
-      if (!n1 || !n2) { alert('Please enter both names 💑'); return; }
+      if (!n1 || !n2) {
+        alert('Please enter both names 💑');
+        return;
+      }
 
       const btn = document.getElementById('genBtn');
       const resultBox = document.getElementById('result');
@@ -70,7 +91,9 @@
       document.getElementById('loadingDiv').style.display = 'flex';
 
       const prompt = `You are a romantic, creative couple name oracle. Given the names "${n1}" and "${n2}":
-Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+IMPORTANT: Reply with ONLY valid JSON. DO NOT write any text before or after the JSON.
+Your response must start with { and end with }.
+Use exactly this shape:
 {
   "main": "the best single combined couple name, blending parts of both names creatively",
   "alt1": "another cute combination",
@@ -81,7 +104,7 @@ Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this
 
       try {
         const raw = await askGemini(prompt, { json: true });
-        const data = safeParseJSON(raw);
+        const data = parseJsonSafely(raw);
         if (!data || !data.story) {
           throw new Error('The oracle\'s response could not be understood. Please try again.');
         }
@@ -91,6 +114,7 @@ Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this
           `<div style="background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:0.9rem;text-align:center;font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--blush);font-style:italic;">${n}</div>`
         ).join('');
         document.getElementById('resultText').textContent = data.story;
+
         document.getElementById('loadingDiv').style.display = 'none';
         resultBox.classList.add('show');
       } catch (err) {
