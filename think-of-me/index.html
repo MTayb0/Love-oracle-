@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>What Are They Thinking? — Love Oracle</title>
-  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
@@ -24,11 +24,11 @@
       <div class="card">
         <div class="input-group">
           <label>Your Name</label>
-          <input type="text" id="myName" placeholder="Your name..." maxlength="30"/>
+          <input type="text" id="myName" placeholder="Your name..." maxlength="30" />
         </div>
         <div class="input-group">
           <label>Their Name</label>
-          <input type="text" id="theirName" placeholder="The person you're thinking of..." maxlength="30"/>
+          <input type="text" id="theirName" placeholder="The person you're thinking of..." maxlength="30" />
         </div>
         <div class="input-group">
           <label>Your Relationship</label>
@@ -69,12 +69,34 @@
 
   <script src="../js/main.js"></script>
   <script>
+    // ── Ultra‑robust JSON parser (built-in, overrides main.js) ──
+    function parseJsonSafely(text) {
+      try {
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+          console.error('No JSON object found. Raw:', text);
+          return null;
+        }
+
+        let jsonStr = text.substring(firstBrace, lastBrace + 1);
+        jsonStr = jsonStr.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        console.error('Failed to parse JSON. Raw response:', text);
+        return null;
+      }
+    }
+
     async function getReading() {
       const myName = document.getElementById('myName').value.trim();
       const theirName = document.getElementById('theirName').value.trim();
       const relation = document.getElementById('relation').value;
       const context = document.getElementById('context').value.trim();
-      if (!myName || !theirName || !relation) { alert('Please fill in your name, their name, and relationship 💭'); return; }
+      if (!myName || !theirName || !relation) {
+        alert('Please fill in your name, their name, and relationship 💭');
+        return;
+      }
 
       const btn = document.getElementById('thinkBtn');
       const resultBox = document.getElementById('result');
@@ -87,7 +109,9 @@
       const prompt = `You are a mystical love oracle for teens. ${myName} is asking about ${theirName}, who is their ${relation}.
 ${context ? 'Extra context: ' + context : ''}
 
-Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+IMPORTANT: Reply with ONLY valid JSON. DO NOT write any text before or after the JSON.
+Your response must start with { and end with }.
+Use exactly this shape:
 {
   "title": "a short mystical title like 'The Stars Have Spoken'",
   "reading": "4-5 poetic, romantic, uplifting sentences about what ${theirName} might be thinking/feeling about ${myName}, hopeful but realistic, using both names",
@@ -98,7 +122,7 @@ This is for entertainment, keep it fun, dreamy, positive, and appropriate for te
 
       try {
         const raw = await askGemini(prompt, { json: true });
-        const data = safeParseJSON(raw);
+        const data = parseJsonSafely(raw);
         if (!data || !data.reading) {
           throw new Error('The oracle\'s response could not be understood. Please try again.');
         }
