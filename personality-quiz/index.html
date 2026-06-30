@@ -29,8 +29,6 @@
   </style>
 </head>
 <body>
-  <canvas id="stars-canvas"></canvas>
-  <div class="hearts-bg"></div>
 
   <div class="page">
     <nav>
@@ -99,6 +97,8 @@
         <span>Reading your cosmic blueprint...</span>
       </div>
 
+      <div id="errorBox" style="display:none; margin-top:1rem;"></div>
+
       <div class="result-box" id="result">
         <div style="text-align:center;margin-bottom:1rem;">
           <div id="pTypeIcon" style="font-size:3rem;"></div>
@@ -126,39 +126,42 @@
     async function getResult() {
       if (Object.keys(answers).length < 5) { alert('Please answer all 5 questions 🔮'); return; }
 
-      document.getElementById('quizBtn').disabled = true;
-      document.getElementById('result').classList.remove('show');
+      const btn = document.getElementById('quizBtn');
+      const resultBox = document.getElementById('result');
+      const errorBox = document.getElementById('errorBox');
+      btn.disabled = true;
+      resultBox.classList.remove('show');
+      errorBox.style.display = 'none';
       document.getElementById('loadingDiv').style.display = 'flex';
 
       const answerList = Object.values(answers).join(' | ');
       const prompt = `You are a fun personality oracle for teens. Based on these quiz answers: ${answerList}
-
-Create a personality profile. Format EXACTLY like this:
-TYPE: [A creative personality type name like "The Moonlight Dreamer" or "The Passionate Flame"]
-EMOJI: [One single emoji that represents them]
-READING: [3-4 sentences describing their personality, how they love, and their unique magic. Be uplifting and empowering.]
-SOULMATE: [One sentence describing their ideal soulmate/partner traits]
-
-Keep it fun, romantic, and empowering for teens.`;
+Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+{
+  "type": "a creative personality type name like 'The Moonlight Dreamer' or 'The Passionate Flame'",
+  "emoji": "one single emoji representing them",
+  "reading": "3-4 uplifting, empowering sentences describing their personality, how they love, and their unique magic",
+  "soulmate": "one sentence describing their ideal soulmate/partner traits"
+}`;
 
       try {
-        const text = await askGemini(prompt);
-        const typeName = text.match(/TYPE:\s*(.+?)(?:\n|EMOJI)/s)?.[1]?.trim() || 'The Cosmic Soul';
-        const emoji = text.match(/EMOJI:\s*(.+?)(?:\n|READING)/s)?.[1]?.trim() || '✨';
-        const reading = text.match(/READING:\s*(.+?)(?=SOULMATE:|$)/s)?.[1]?.trim() || text;
-        const soulmate = text.match(/SOULMATE:\s*(.+)/s)?.[1]?.trim() || '';
+        const raw = await askGemini(prompt, { json: true });
+        const data = safeParseJSON(raw);
+        if (!data || !data.reading) {
+          throw new Error('The oracle\'s response could not be understood. Please try again.');
+        }
 
-        document.getElementById('pTypeIcon').textContent = emoji;
-        document.getElementById('pTypeName').textContent = typeName;
-        document.getElementById('resultText').textContent = reading;
-        document.getElementById('soulmate').innerHTML = `<span style="color:var(--gold);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">💕 Your Soulmate</span><br/><span style="color:var(--soft);font-size:0.88rem;line-height:1.6;">${soulmate}</span>`;
+        document.getElementById('pTypeIcon').textContent = data.emoji || '✨';
+        document.getElementById('pTypeName').textContent = data.type || 'The Cosmic Soul';
+        document.getElementById('resultText').textContent = data.reading;
+        document.getElementById('soulmate').innerHTML = `<span style="color:var(--gold);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">💕 Your Soulmate</span><br/><span style="color:var(--soft);font-size:0.88rem;line-height:1.6;">${data.soulmate || ''}</span>`;
         document.getElementById('loadingDiv').style.display = 'none';
-        document.getElementById('result').classList.add('show');
-      } catch(e) {
+        resultBox.classList.add('show');
+      } catch (err) {
         document.getElementById('loadingDiv').style.display = 'none';
-        alert('The oracle needs a moment... try again 🔮');
+        showOracleError(err, errorBox);
       }
-      document.getElementById('quizBtn').disabled = false;
+      btn.disabled = false;
     }
   </script>
 </body>
