@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
-  <canvas id="stars-canvas"></canvas>
-  <div class="hearts-bg"></div>
 
   <div class="page">
     <nav>
@@ -35,6 +33,13 @@
         <button class="btn" id="calcBtn" onclick="calculate()">✨ Calculate Love ✨</button>
       </div>
 
+      <div id="loadingDiv" class="loading" style="display:none; justify-content:center;">
+        <div class="spinner"></div>
+        <span>Reading the cosmic energy...</span>
+      </div>
+
+      <div id="errorBox" style="display:none; margin-top:1rem;"></div>
+
       <div class="result-box" id="result">
         <div class="love-meter">
           <div class="love-percent" id="percentNum">0<span>%</span></div>
@@ -43,11 +48,6 @@
         </div>
         <div class="result-title" id="resultTitle">Your Love Story</div>
         <div class="result-text" id="resultText"></div>
-      </div>
-
-      <div id="loadingDiv" class="loading" style="display:none; justify-content:center;">
-        <div class="spinner"></div>
-        <span>Reading the cosmic energy...</span>
       </div>
     </div>
 
@@ -61,27 +61,35 @@
       const n2 = document.getElementById('name2').value.trim();
       if (!n1 || !n2) { alert('Please enter both names 💕'); return; }
 
-      // Generate a consistent but fun percentage from the names
       let hash = 0;
       for (const c of (n1 + n2).toLowerCase()) hash = (hash * 31 + c.charCodeAt(0)) % 100;
       const pct = Math.max(35, hash === 0 ? 72 : hash);
 
-      document.getElementById('calcBtn').disabled = true;
-      document.getElementById('result').classList.remove('show');
+      const btn = document.getElementById('calcBtn');
+      const resultBox = document.getElementById('result');
+      const errorBox = document.getElementById('errorBox');
+      btn.disabled = true;
+      resultBox.classList.remove('show');
+      errorBox.style.display = 'none';
       document.getElementById('loadingDiv').style.display = 'flex';
 
       const emoji = pct >= 80 ? '💖' : pct >= 60 ? '💕' : pct >= 40 ? '💛' : '💙';
-      const prompt = `You are a romantic, mystical love oracle. ${n1} and ${n2} have a love compatibility of ${pct}%. 
-Write a short, dreamy, poetic love reading (3-4 sentences) about their connection. 
-Be romantic, hopeful, and mystical. Use cosmic/star metaphors. 
-Start with their names. Keep it sweet and fun for teens.`;
+      const prompt = `You are a romantic, mystical love oracle. ${n1} and ${n2} have a love compatibility of ${pct}%.
+Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+{
+  "reading": "3-4 dreamy, poetic, mystical sentences about their connection, starting with their names, using cosmic/star metaphors, sweet and fun for teens"
+}`;
 
       try {
-        const text = await askGemini(prompt);
-        document.getElementById('loadingDiv').style.display = 'none';
-        document.getElementById('result').classList.add('show');
+        const raw = await askGemini(prompt, { json: true });
+        const data = safeParseJSON(raw);
+        if (!data || !data.reading) {
+          throw new Error('The oracle\'s response could not be understood. Please try again.');
+        }
 
-        // Animate percentage
+        document.getElementById('loadingDiv').style.display = 'none';
+        resultBox.classList.add('show');
+
         const numEl = document.getElementById('percentNum');
         let cur = 0;
         const tick = setInterval(() => {
@@ -96,13 +104,12 @@ Start with their names. Keep it sweet and fun for teens.`;
           pct >= 80 ? 'A Cosmic Match 💖' :
           pct >= 60 ? 'Written in the Stars 💕' :
           pct >= 40 ? 'Gentle Sparks 💛' : 'Different Orbits 💙';
-        document.getElementById('resultText').textContent = text;
-      } catch(e) {
+        document.getElementById('resultText').textContent = data.reading;
+      } catch (err) {
         document.getElementById('loadingDiv').style.display = 'none';
-        alert('The oracle is resting... please try again 🌙');
+        showOracleError(err, errorBox);
       }
-
-      document.getElementById('calcBtn').disabled = false;
+      btn.disabled = false;
     }
 
     document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
