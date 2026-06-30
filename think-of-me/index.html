@@ -7,8 +7,6 @@
   <link rel="stylesheet" href="../css/style.css"/>
 </head>
 <body>
-  <canvas id="stars-canvas"></canvas>
-  <div class="hearts-bg"></div>
 
   <div class="page">
     <nav>
@@ -56,6 +54,8 @@
         <span>Reading the energy between you...</span>
       </div>
 
+      <div id="errorBox" style="display:none; margin-top:1rem;"></div>
+
       <div class="result-box" id="result">
         <div style="text-align:center;font-size:2.5rem;margin-bottom:0.5rem;">💭</div>
         <div class="result-title" id="resultTitle">The Oracle Speaks</div>
@@ -76,49 +76,54 @@
       const context = document.getElementById('context').value.trim();
       if (!myName || !theirName || !relation) { alert('Please fill in your name, their name, and relationship 💭'); return; }
 
-      document.getElementById('thinkBtn').disabled = true;
-      document.getElementById('result').classList.remove('show');
+      const btn = document.getElementById('thinkBtn');
+      const resultBox = document.getElementById('result');
+      const errorBox = document.getElementById('errorBox');
+      btn.disabled = true;
+      resultBox.classList.remove('show');
+      errorBox.style.display = 'none';
       document.getElementById('loadingDiv').style.display = 'flex';
 
       const prompt = `You are a mystical love oracle for teens. ${myName} is asking about ${theirName}, who is their ${relation}.
 ${context ? 'Extra context: ' + context : ''}
 
-Give a fun, romantic, and hopeful oracle reading. Format EXACTLY like this:
-TITLE: [A short mystical title like "The Stars Have Spoken" or "Cosmic Whispers Revealed"]
-READING: [4-5 sentences about what ${theirName} might be thinking/feeling about ${myName}. Be poetic, romantic, and uplifting. Give hope but be realistic. Use both names.]
-VIBE: [One word energy vibe like "Curious", "Warm", "Hopeful", "Interested", "Dreaming of you"]
-ADVICE: [One sweet, empowering sentence of advice for ${myName}]
-
-Keep it fun, dreamy, positive, and appropriate for teens. This is for entertainment.`;
+Respond with ONLY valid JSON, no markdown fences, no extra text, in exactly this shape:
+{
+  "title": "a short mystical title like 'The Stars Have Spoken'",
+  "reading": "4-5 poetic, romantic, uplifting sentences about what ${theirName} might be thinking/feeling about ${myName}, hopeful but realistic, using both names",
+  "vibe": "one word energy vibe like Curious, Warm, Hopeful, Interested",
+  "advice": "one sweet, empowering sentence of advice for ${myName}"
+}
+This is for entertainment, keep it fun, dreamy, positive, and appropriate for teens.`;
 
       try {
-        const text = await askGemini(prompt);
-        const title = text.match(/TITLE:\s*(.+?)(?:\n|READING)/s)?.[1]?.trim() || 'The Oracle Speaks';
-        const reading = text.match(/READING:\s*(.+?)(?=VIBE:|$)/s)?.[1]?.trim() || text;
-        const vibe = text.match(/VIBE:\s*(.+?)(?:\n|ADVICE)/s)?.[1]?.trim() || 'Hopeful';
-        const advice = text.match(/ADVICE:\s*(.+)/s)?.[1]?.trim() || '';
+        const raw = await askGemini(prompt, { json: true });
+        const data = safeParseJSON(raw);
+        if (!data || !data.reading) {
+          throw new Error('The oracle\'s response could not be understood. Please try again.');
+        }
 
-        document.getElementById('resultTitle').textContent = title;
-        document.getElementById('resultText').textContent = reading;
+        document.getElementById('resultTitle').textContent = data.title || 'The Oracle Speaks';
+        document.getElementById('resultText').textContent = data.reading;
         document.getElementById('vibeBar').innerHTML = `
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
             <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:center;">
               <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">Their Energy</div>
-              <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--rose);font-style:italic;">${vibe}</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--rose);font-style:italic;">${data.vibe || '—'}</div>
             </div>
             <div style="background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:center;">
               <div style="font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">Oracle's Advice</div>
-              <div style="font-size:0.8rem;color:var(--soft);line-height:1.5;">${advice}</div>
+              <div style="font-size:0.8rem;color:var(--soft);line-height:1.5;">${data.advice || '—'}</div>
             </div>
           </div>`;
 
         document.getElementById('loadingDiv').style.display = 'none';
-        document.getElementById('result').classList.add('show');
-      } catch(e) {
+        resultBox.classList.add('show');
+      } catch (err) {
         document.getElementById('loadingDiv').style.display = 'none';
-        alert('The oracle is resting... try again 💭');
+        showOracleError(err, errorBox);
       }
-      document.getElementById('thinkBtn').disabled = false;
+      btn.disabled = false;
     }
   </script>
 </body>
