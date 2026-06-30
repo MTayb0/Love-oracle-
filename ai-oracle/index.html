@@ -1,141 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Love Oracle — Love Oracle</title>
-  <link rel="stylesheet" href="../css/style.css"/>
-</head>
-<body>
-
-  <div class="page">
-    <nav>
-      <a href="../index.html" class="nav-logo">Love <span>Oracle</span></a>
-      <a href="../index.html" class="nav-back">← Back</a>
-    </nav>
-
-    <div class="tool-page">
-      <div class="tool-header">
-        <span class="icon">🌌</span>
-        <h1>AI Love Oracle</h1>
-        <p>Ask anything about love, crushes, relationships, or life</p>
-      </div>
-
-      <div class="chat-box">
-        <div class="chat-messages" id="chatMessages">
-          <div class="msg ai">
-            ✨ Hello, dear soul. I am the Love Oracle — a keeper of cosmic wisdom and gentle truths. Ask me anything about love, your feelings, your heart's questions, or life's mysteries. I'm here for you. 🌙
-          </div>
-          <div class="msg ai">
-            💕 Some questions to start with:<br/>
-            • "Does my crush like me?"<br/>
-            • "How do I get over my ex?"<br/>
-            • "What kind of person is right for me?"<br/>
-            • "I'm feeling lonely, help me..."
-          </div>
-        </div>
-        <div class="chat-input-row">
-          <input type="text" id="chatInput" placeholder="Ask the oracle anything..." maxlength="300"
-            onkeydown="if(event.key==='Enter') sendMessage()"/>
-          <button class="chat-send" onclick="sendMessage()">✨</button>
-        </div>
-      </div>
-
-      <p style="text-align:center;font-size:0.75rem;color:var(--soft);margin-top:1rem;font-weight:300;">
-        🔮 For entertainment & emotional support · Not a replacement for real advice
-      </p>
-    </div>
-
-    <footer><p>Made with 💕 by Love Oracle · For entertainment purposes</p></footer>
-  </div>
-
-  <script src="../js/main.js"></script>
-  <script>
-    const history = [];
-    const SYSTEM = `You are the Love Oracle — a warm, mystical, and empathetic AI guide for teenagers. 
+<script src="../js/main.js"></script>
+<script>
+  const history = [];
+  const SYSTEM = `You are the Love Oracle — a warm, mystical, and empathetic AI guide for teenagers. 
 You speak in a romantic, poetic, and uplifting tone. You give thoughtful advice about love, crushes, friendships, heartbreak, and self-love.
 Always be kind, supportive, and age-appropriate. Never give harmful advice. 
 Use occasional emojis and cosmic metaphors. Keep responses to 3-5 sentences — warm and focused.
 If someone seems very sad or mentions serious issues, gently suggest talking to a trusted adult or friend.`;
 
-    async function sendMessage() {
-      const input = document.getElementById('chatInput');
-      const msg = input.value.trim();
-      if (!msg) return;
+  async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
 
-      addMessage(msg, 'user');
-      input.value = '';
-      input.disabled = true;
+    addMessage(msg, 'user');
+    input.value = '';
+    input.disabled = true;
 
-      const typingDiv = addMessage('✨ The oracle is thinking...', 'ai');
+    const typingDiv = addMessage('✨ The oracle is thinking...', 'ai');
 
-      // Build conversation context
+    // Build a single text prompt with context (just like horoscope does)
+    let fullPrompt = SYSTEM + '\n\n';
+    
+    if (history.length > 0) {
+      fullPrompt += 'Previous conversation:\n';
+      // Use last 6 messages for context
+      const recent = history.slice(-6);
+      for (const h of recent) {
+        const role = h.role === 'user' ? 'User' : 'Oracle';
+        fullPrompt += `${role}: ${h.parts[0].text}\n`;
+      }
+    }
+    fullPrompt += `\nUser: ${msg}\nOracle:`;
+
+    try {
+      // ✅ USE THE PROXY (no API key exposed, handles CORS)
+      const reply = await askGemini(fullPrompt, { json: false });
+      
+      // Store in history for context next time
       history.push({ role: 'user', parts: [{ text: msg }] });
-
-      const contents = [
-        { role: 'user', parts: [{ text: SYSTEM + '\n\nUser says: ' + msg }] }
-      ];
-
-      // Add recent history for context (last 6 messages)
-      if (history.length > 1) {
-        const recent = history.slice(-6);
-        contents[0].parts[0].text = SYSTEM + '\n\nConversation so far:\n' +
-          recent.map(h => `${h.role === 'user' ? 'User' : 'Oracle'}: ${h.parts[0].text}`).join('\n');
-      }
-
-      try {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents,
-              generationConfig: { temperature: 0.85, maxOutputTokens: 400 }
-            })
-          }
-        );
-
-        if (!res.ok) {
-          let detail = '';
-          try { detail = (await res.json())?.error?.message || ''; } catch (e) {}
-          throw new Error('AI service error (' + res.status + '). ' + detail);
-        }
-
-        const data = await res.json();
-        const blockReason = data.promptFeedback?.blockReason;
-        if (blockReason) throw new Error('That message was blocked by safety filters. Try rephrasing.');
-
-        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!reply) throw new Error('The oracle returned an empty response.');
-
-        history.push({ role: 'model', parts: [{ text: reply }] });
-        typingDiv.textContent = reply;
-      } catch(e) {
-        console.error('Love Oracle chat error:', e);
-        typingDiv.textContent = '🌩️ ' + (e.message || 'Something went wrong. Please try again.');
-        typingDiv.style.color = '#ffd9e3';
-      }
-
-      input.disabled = false;
-      input.focus();
-      scrollToBottom();
+      history.push({ role: 'model', parts: [{ text: reply }] });
+      
+      typingDiv.textContent = reply;
+    } catch (err) {
+      console.error('Love Oracle chat error:', err);
+      typingDiv.textContent = '🌩️ ' + (err.message || 'Something went wrong. Please try again.');
+      typingDiv.style.color = '#ffd9e3';
     }
 
-    function addMessage(text, role) {
-      const box = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.className = `msg ${role}`;
-      div.textContent = text;
-      box.appendChild(div);
-      scrollToBottom();
-      return div;
-    }
+    input.disabled = false;
+    input.focus();
+    scrollToBottom();
+  }
 
-    function scrollToBottom() {
-      const box = document.getElementById('chatMessages');
-      box.scrollTop = box.scrollHeight;
-    }
-  </script>
-</body>
-</html>
+  function addMessage(text, role) {
+    const box = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    div.textContent = text;
+    box.appendChild(div);
+    scrollToBottom();
+    return div;
+  }
+
+  function scrollToBottom() {
+    const box = document.getElementById('chatMessages');
+    box.scrollTop = box.scrollHeight;
+  }
+</script>
